@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Chart Analyzer",
-    "slug": "chart-analyzer",
+    "slug": "chartbot",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -26,7 +26,11 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.chartanalyzer.app",
-      "permissions": ["CAMERA"]
+      "permissions": [
+        "CAMERA",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -38,6 +42,12 @@
           "cameraPermission": "Allow Chart Analyzer to access your camera to capture candlestick charts."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "1aa53d21-b686-4080-8884-b6bb1aa0ab8a"
+      }
+    },
+    "owner": "bkbots"
   }
 }
