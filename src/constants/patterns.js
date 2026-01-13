@@ -39,3 +39,26 @@ export const RISK_LEVELS = {
     MODERATE: { label: 'Moderate', stopLossPercent: 2, takeProfitPercent: 4 },
     AGGRESSIVE: { label: 'Aggressive', stopLossPercent: 3, takeProfitPercent: 6 },
 };
+
+export const INDICATOR_TYPES = {
+    SMA: 'SMA',
+    EMA: 'EMA',
+    RSI: 'RSI',
+    MACD: 'MACD',
+    BOLLINGER: 'BOLLINGER',
+    STOCHASTIC: 'STOCHASTIC',
+};
+
+export const INDICATOR_SIGNALS = {
+    BULLISH: 'bullish',
+    BEARISH: 'bearish',
+    NEUTRAL: 'neutral',
+    OVERBOUGHT: 'overbought',
+    OVERSOLD: 'oversold',
+};
+
+export const NOTIFICATION_THRESHOLDS = {
+    HIGH: 75,
+    MEDIUM: 60,
+    LOW: 50,
+};

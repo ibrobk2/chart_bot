@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { TrendingUp, TrendingDown, Minus, AlertTriangle, Target, Shield } from 'lucide-react-native';
+import { TrendingUp, TrendingDown, Minus, AlertTriangle, Target, Shield, Share2 } from 'lucide-react-native';
 import { COLORS, SIZES, SIGNAL_TYPES, CONFIDENCE_LEVELS, RISK_LEVELS } from '../constants';
 import PatternRecognitionService from '../services/PatternRecognitionService';
 import SignalEngine from '../services/SignalEngine';
+import NotificationService from '../services/NotificationService';
 import StorageService from '../services/StorageService';
+import ExportService from '../services/ExportService';
 
 export default function AnalysisScreen({ route, navigation }) {
     const { imageUri } = route.params;
@@ -38,6 +40,11 @@ export default function AnalysisScreen({ route, navigation }) {
 
             // Save to history
             await StorageService.saveAnalysis(analysisResult);
+
+            // Trigger notification for strong signals
+            if (signal.action !== SIGNAL_TYPES.HOLD) {
+                await NotificationService.sendSignalAlert(signal);
+            }
 
         } catch (error) {
             console.error('Analysis error:', error);
@@ -138,7 +145,76 @@ export default function AnalysisScreen({ route, navigation }) {
                             />
                         </View>
                     </View>
+
+                    {/* Reasoning */}
+                    <View style={styles.reasoningContainer}>
+                        <Text style={styles.reasoningText}>{signal.reasoning}</Text>
+                    </View>
                 </View>
+
+                {/* Technical Indicators */}
+                {signal.indicators && (
+                    <>
+                        <Text style={styles.sectionTitle}>Technical Indicators</Text>
+                        <View style={styles.indicatorsContainer}>
+                            <View style={styles.indicatorRow}>
+                                <View style={styles.indicatorItem}>
+                                    <Text style={styles.indicatorLabel}>RSI (14)</Text>
+                                    <Text style={[styles.indicatorValue, {
+                                        color: signal.indicators.rsi.signal === 'bullish' ? COLORS.buy :
+                                            signal.indicators.rsi.signal === 'bearish' ? COLORS.sell : COLORS.text
+                                    }]}>
+                                        {signal.indicators.rsi.value}
+                                    </Text>
+                                    <Text style={styles.indicatorSubtext}>{signal.indicators.rsi.zone}</Text>
+                                </View>
+                                <View style={styles.indicatorItem}>
+                                    <Text style={styles.indicatorLabel}>MACD</Text>
+                                    <Text style={[styles.indicatorValue, {
+                                        color: signal.indicators.macd.signal === 'bullish' ? COLORS.buy :
+                                            signal.indicators.macd.signal === 'bearish' ? COLORS.sell : COLORS.text
+                                    }]}>
+                                        {signal.indicators.macd.histogram > 0 ? '+' : ''}{signal.indicators.macd.histogram}
+                                    </Text>
+                                    <Text style={styles.indicatorSubtext}>{signal.indicators.macd.signal}</Text>
+                                </View>
+                            </View>
+
+                            <View style={styles.indicatorRow}>
+                                <View style={styles.indicatorItem}>
+                                    <Text style={styles.indicatorLabel}>Bollinger Bands</Text>
+                                    <Text style={styles.indicatorValue}>
+                                        {signal.indicators.bollingerBands.bandwidth}%
+                                    </Text>
+                                    <Text style={styles.indicatorSubtext}>{signal.indicators.bollingerBands.position}</Text>
+                                </View>
+                                <View style={styles.indicatorItem}>
+                                    <Text style={styles.indicatorLabel}>Stochastic</Text>
+                                    <Text style={[styles.indicatorValue, {
+                                        color: signal.indicators.stochastic.signal === 'bullish' ? COLORS.buy :
+                                            signal.indicators.stochastic.signal === 'bearish' ? COLORS.sell : COLORS.text
+                                    }]}>
+                                        {signal.indicators.stochastic.k.toFixed(0)}/{signal.indicators.stochastic.d.toFixed(0)}
+                                    </Text>
+                                    <Text style={styles.indicatorSubtext}>{signal.indicators.stochastic.zone}</Text>
+                                </View>
+                            </View>
+
+                            <View style={styles.indicatorRow}>
+                                <View style={styles.indicatorItem}>
+                                    <Text style={styles.indicatorLabel}>SMA (20)</Text>
+                                    <Text style={styles.indicatorValue}>{signal.indicators.sma.value}</Text>
+                                    <Text style={styles.indicatorSubtext}>{signal.indicators.sma.priceRelation} price</Text>
+                                </View>
+                                <View style={styles.indicatorItem}>
+                                    <Text style={styles.indicatorLabel}>EMA (12)</Text>
+                                    <Text style={styles.indicatorValue}>{signal.indicators.ema.value}</Text>
+                                    <Text style={styles.indicatorSubtext}>{signal.indicators.ema.priceRelation} price</Text>
+                                </View>
+                            </View>
+                        </View>
+                    </>
+                )}
 
                 {/* Detected Patterns */}
                 <Text style={styles.sectionTitle}>Detected Patterns</Text>
@@ -206,6 +282,24 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         padding: SIZES.padding,
+    },
+    topHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    topTitle: {
+        fontSize: SIZES.xxl,
+        fontWeight: 'bold',
+        color: COLORS.text,
+    },
+    exportButton: {
+        padding: 8,
+        backgroundColor: COLORS.surface,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: COLORS.border,
     },
     loadingContainer: {
         flex: 1,
@@ -408,5 +502,49 @@ const styles = StyleSheet.create({
         color: COLORS.textSecondary,
         marginLeft: 12,
         lineHeight: 20,
+    },
+    reasoningContainer: {
+        marginTop: 16,
+        paddingTop: 16,
+        borderTopWidth: 1,
+        borderTopColor: COLORS.border,
+    },
+    reasoningText: {
+        fontSize: SIZES.md,
+        color: COLORS.text,
+        lineHeight: 22,
+        fontStyle: 'italic',
+    },
+    indicatorsContainer: {
+        backgroundColor: COLORS.surface,
+        borderRadius: SIZES.radius,
+        padding: SIZES.padding,
+        marginBottom: 24,
+    },
+    indicatorRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 16,
+    },
+    indicatorItem: {
+        flex: 1,
+        alignItems: 'center',
+    },
+    indicatorLabel: {
+        fontSize: SIZES.xs,
+        color: COLORS.textSecondary,
+        marginBottom: 4,
+        textTransform: 'uppercase',
+    },
+    indicatorValue: {
+        fontSize: SIZES.lg,
+        fontWeight: 'bold',
+        color: COLORS.text,
+    },
+    indicatorSubtext: {
+        fontSize: SIZES.xs,
+        color: COLORS.textSecondary,
+        marginTop: 2,
+        textTransform: 'capitalize',
     },
 });

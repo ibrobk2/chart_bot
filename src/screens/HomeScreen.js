@@ -1,7 +1,6 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Camera, TrendingUp, History, AlertCircle } from 'lucide-react-native';
+import { Camera, TrendingUp, History, AlertCircle, Activity } from 'lucide-react-native';
 import { COLORS, SIZES } from '../constants';
 
 export default function HomeScreen({ navigation }) {
@@ -10,8 +9,16 @@ export default function HomeScreen({ navigation }) {
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 {/* Header */}
                 <View style={styles.header}>
-                    <Text style={styles.title}>Chart Analyzer</Text>
-                    <Text style={styles.subtitle}>AI-Powered Trading Signals</Text>
+                    <View style={styles.headerTop}>
+                        <Image
+                            source={require('../../assets/icon.png')}
+                            style={styles.logo}
+                        />
+                        <View style={styles.headerText}>
+                            <Text style={styles.title}>Chart Bot</Text>
+                            <Text style={styles.subtitle}>AI Candlestick Analysis</Text>
+                        </View>
+                    </View>
                 </View>
 
                 {/* Stats Cards */}
@@ -48,6 +55,14 @@ export default function HomeScreen({ navigation }) {
                         <History color={COLORS.text} size={32} />
                         <Text style={styles.actionText}>View History</Text>
                     </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.actionCard, { backgroundColor: COLORS.accent }]}
+                        onPress={() => navigation.navigate('BacktestingTab')}
+                    >
+                        <Activity color={COLORS.text} size={32} />
+                        <Text style={styles.actionText}>Analytics</Text>
+                    </TouchableOpacity>
                 </View>
 
                 {/* Disclaimer */}
@@ -80,17 +95,32 @@ const styles = StyleSheet.create({
         padding: SIZES.padding,
     },
     header: {
-        marginBottom: 24,
+        marginBottom: 32,
+        marginTop: 8,
+    },
+    headerTop: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    logo: {
+        width: 60,
+        height: 60,
+        borderRadius: 12,
+        marginRight: 16,
+    },
+    headerText: {
+        flex: 1,
     },
     title: {
-        fontSize: SIZES.xxxl,
+        fontSize: 28,
         fontWeight: 'bold',
         color: COLORS.text,
-        marginBottom: 4,
+        letterSpacing: -0.5,
     },
     subtitle: {
-        fontSize: SIZES.lg,
+        fontSize: SIZES.md,
         color: COLORS.textSecondary,
+        marginTop: 2,
     },
     statsContainer: {
         flexDirection: 'row',

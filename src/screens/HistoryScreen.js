@@ -117,12 +117,22 @@ export default function HistoryScreen({ navigation }) {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.title}>Analysis History</Text>
-                {history.length > 0 && (
-                    <TouchableOpacity onPress={clearHistory}>
-                        <Trash2 color={COLORS.error} size={20} />
-                    </TouchableOpacity>
-                )}
+                <Text style={styles.title}>History</Text>
+                <View style={styles.headerActions}>
+                    {history.length > 0 && (
+                        <>
+                            <TouchableOpacity
+                                onPress={() => ExportService.exportHistoryToCSV(history)}
+                                style={styles.headerButton}
+                            >
+                                <Share2 color={COLORS.primary} size={20} />
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={clearHistory} style={styles.headerButton}>
+                                <Trash2 color={COLORS.error} size={20} />
+                            </TouchableOpacity>
+                        </>
+                    )}
+                </View>
             </View>
 
             <FlatList
@@ -160,6 +170,14 @@ const styles = StyleSheet.create({
         fontSize: SIZES.xxl,
         fontWeight: 'bold',
         color: COLORS.text,
+    },
+    headerActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    headerButton: {
+        marginLeft: 16,
+        padding: 4,
     },
     listContent: {
         padding: SIZES.padding,

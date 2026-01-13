@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Shield, Bell, Moon, Trash2, Info, ExternalLink } from 'lucide-react-native';
-import { COLORS, SIZES, RISK_LEVELS } from '../constants';
+import { COLORS, SIZES, RISK_LEVELS, NOTIFICATION_THRESHOLDS } from '../constants';
 import StorageService from '../services/StorageService';
+import NotificationService from '../services/NotificationService';
 
 export default function SettingsScreen() {
     const [darkMode, setDarkMode] = useState(true);
     const [notifications, setNotifications] = useState(true);
+    const [notificationThreshold, setNotificationThreshold] = useState(NOTIFICATION_THRESHOLDS.HIGH);
     const [riskLevel, setRiskLevel] = useState('MODERATE');
 
     useEffect(() => {
@@ -19,6 +21,7 @@ export default function SettingsScreen() {
         if (settings) {
             setDarkMode(settings.darkMode ?? true);
             setNotifications(settings.notifications ?? true);
+            setNotificationThreshold(settings.notificationThreshold ?? NOTIFICATION_THRESHOLDS.HIGH);
             setRiskLevel(settings.riskLevel ?? 'MODERATE');
         }
     };
@@ -41,9 +44,23 @@ export default function SettingsScreen() {
         saveSettings('notifications', value);
     };
 
+    const handleThresholdChange = (threshold) => {
+        setNotificationThreshold(threshold);
+        saveSettings('notificationThreshold', threshold);
+    };
+
     const handleRiskLevelChange = (level) => {
         setRiskLevel(level);
         saveSettings('riskLevel', level);
+    };
+
+    const handleTestNotification = async () => {
+        const permitted = await NotificationService.requestPermissions();
+        if (permitted) {
+            await NotificationService.sendTestNotification();
+        } else {
+            Alert.alert('Permission Denied', 'Please enable notifications in your device settings.');
+        }
     };
 
     const handleClearData = () => {
@@ -270,5 +287,60 @@ const styles = StyleSheet.create({
         fontSize: SIZES.sm,
         color: COLORS.textSecondary,
         lineHeight: 20,
+    },
+    thresholdSection: {
+        padding: SIZES.padding,
+        paddingTop: 0,
+        backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    },
+    subSectionTitle: {
+        fontSize: SIZES.sm,
+        fontWeight: '600',
+        color: COLORS.textSecondary,
+        marginBottom: 12,
+        marginTop: 8,
+    },
+    thresholdOptions: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        marginBottom: 16,
+    },
+    thresholdOption: {
+        backgroundColor: COLORS.surfaceLight,
+        borderRadius: 20,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        marginRight: 8,
+        marginBottom: 8,
+        borderWidth: 1,
+        borderColor: 'transparent',
+    },
+    thresholdOptionActive: {
+        borderColor: COLORS.primary,
+        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+    },
+    thresholdText: {
+        fontSize: SIZES.xs,
+        color: COLORS.textSecondary,
+    },
+    thresholdTextActive: {
+        color: COLORS.primary,
+        fontWeight: 'bold',
+    },
+    testButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 10,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: COLORS.primary,
+        borderStyle: 'dashed',
+    },
+    testButtonText: {
+        fontSize: SIZES.sm,
+        color: COLORS.primary,
+        marginLeft: 8,
+        fontWeight: '600',
     },
 });

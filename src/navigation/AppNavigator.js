@@ -2,7 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Home, Camera, History, Settings } from 'lucide-react-native';
+import { Home, Camera, History, Settings, Activity } from 'lucide-react-native';
 import { COLORS, SIZES } from '../constants';
 import {
     HomeScreen,
@@ -10,6 +10,7 @@ import {
     AnalysisScreen,
     HistoryScreen,
     SettingsScreen,
+    BacktestingScreen,
 } from '../screens';
 
 const Stack = createStackNavigator();
@@ -60,6 +61,14 @@ function HomeTabs() {
                 }}
             />
             <Tab.Screen
+                name="BacktestingTab"
+                component={BacktestingScreen}
+                options={{
+                    tabBarLabel: 'Analytics',
+                    tabBarIcon: ({ color, size }) => <Activity color={color} size={size} />,
+                }}
+            />
+            <Tab.Screen
                 name="SettingsTab"
                 component={SettingsScreen}
                 options={{
@@ -103,6 +112,7 @@ export default function AppNavigator() {
                 />
                 <Stack.Screen name="History" component={HistoryScreen} />
                 <Stack.Screen name="Settings" component={SettingsScreen} />
+                <Stack.Screen name="Backtesting" component={BacktestingScreen} />
             </Stack.Navigator>
         </NavigationContainer>
     );
