@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Home, Camera, History, Settings, Activity } from 'lucide-react-native';
-import { COLORS, SIZES } from '../constants';
+import { COLORS, SIZES, SHADOWS } from '../constants';
 import {
     HomeScreen,
     CaptureScreen,
@@ -23,10 +23,17 @@ function HomeTabs() {
                 headerShown: false,
                 tabBarStyle: {
                     backgroundColor: COLORS.surface,
-                    borderTopColor: COLORS.border,
-                    paddingBottom: 8,
-                    paddingTop: 8,
-                    height: 65,
+                    borderTopColor: 'transparent',
+                    position: 'absolute',
+                    bottom: 20,
+                    left: 20,
+                    right: 20,
+                    borderRadius: 25,
+                    height: 70,
+                    paddingBottom: 10,
+                    paddingTop: 10,
+                    elevation: 5,
+                    ...SHADOWS.medium,
                 },
                 tabBarActiveTintColor: COLORS.primary,
                 tabBarInactiveTintColor: COLORS.textSecondary,

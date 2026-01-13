@@ -20,7 +20,7 @@ export default function SettingsScreen() {
         const settings = await StorageService.getSettings();
         if (settings) {
             setDarkMode(settings.darkMode ?? true);
-            setNotifications(settings.notifications ?? true);
+            setNotifications(settings.notificationsEnabled ?? true);
             setNotificationThreshold(settings.notificationThreshold ?? NOTIFICATION_THRESHOLDS.HIGH);
             setRiskLevel(settings.riskLevel ?? 'MODERATE');
         }
@@ -41,7 +41,7 @@ export default function SettingsScreen() {
 
     const handleNotificationsChange = (value) => {
         setNotifications(value);
-        saveSettings('notifications', value);
+        saveSettings('notificationsEnabled', value);
     };
 
     const handleThresholdChange = (threshold) => {
@@ -74,6 +74,11 @@ export default function SettingsScreen() {
                     style: 'destructive',
                     onPress: async () => {
                         await StorageService.clearAll();
+                        // Reset local state
+                        setDarkMode(true);
+                        setNotifications(true);
+                        setNotificationThreshold(NOTIFICATION_THRESHOLDS.HIGH);
+                        setRiskLevel('MODERATE');
                         Alert.alert('Success', 'All data has been cleared.');
                     }
                 },
@@ -150,8 +155,51 @@ export default function SettingsScreen() {
                             onValueChange={handleNotificationsChange}
                             trackColor={{ false: COLORS.surfaceLight, true: COLORS.primary }}
                             thumbColor={COLORS.text}
+                            disabled={NotificationService.isEnvironmentDisabled()}
                         />
                     </View>
+
+                    {!NotificationService.isEnvironmentDisabled() && notifications && (
+                        <View style={styles.thresholdSection}>
+                            <Text style={styles.subSectionTitle}>Alert Confidence Threshold</Text>
+                            <View style={styles.thresholdOptions}>
+                                {Object.entries(NOTIFICATION_THRESHOLDS).map(([key, value]) => (
+                                    <TouchableOpacity
+                                        key={key}
+                                        style={[
+                                            styles.thresholdOption,
+                                            notificationThreshold === value && styles.thresholdOptionActive,
+                                        ]}
+                                        onPress={() => handleThresholdChange(value)}
+                                    >
+                                        <Text style={[
+                                            styles.thresholdText,
+                                            notificationThreshold === value && styles.thresholdTextActive,
+                                        ]}>
+                                            {key} ({value}%)
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+
+                            <TouchableOpacity
+                                style={styles.testButton}
+                                onPress={handleTestNotification}
+                            >
+                                <Bell color={COLORS.primary} size={16} />
+                                <Text style={styles.testButtonText}>Send Test Alert</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                    {NotificationService.isEnvironmentDisabled() && (
+                        <View style={styles.warningBox}>
+                            <Info color={COLORS.warning} size={16} />
+                            <Text style={styles.warningText}>
+                                Push notifications are limited in Expo Go (Android).
+                                Use a development build for full support.
+                            </Text>
+                        </View>
+                    )}
                 </View>
 
                 {/* Data Section */}
@@ -342,5 +390,20 @@ const styles = StyleSheet.create({
         color: COLORS.primary,
         marginLeft: 8,
         fontWeight: '600',
+    },
+    warningBox: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+        padding: 12,
+        margin: SIZES.padding,
+        marginTop: 0,
+        borderRadius: 8,
+    },
+    warningText: {
+        fontSize: SIZES.xs,
+        color: COLORS.warning,
+        marginLeft: 8,
+        flex: 1,
     },
 });

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { TrendingUp, TrendingDown, Minus, Clock, Trash2 } from 'lucide-react-native';
+import { TrendingUp, TrendingDown, Minus, Clock, Trash2, Share2 } from 'lucide-react-native';
 import { COLORS, SIZES, SIGNAL_TYPES } from '../constants';
 import StorageService from '../services/StorageService';
 
