@@ -2,10 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { TrendingUp, TrendingDown, Minus, Clock, Trash2, Share2 } from 'lucide-react-native';
-import { COLORS, SIZES, SIGNAL_TYPES } from '../constants';
+import { SIZES, SIGNAL_TYPES } from '../constants';
 import StorageService from '../services/StorageService';
+import { useTheme } from '../context/ThemeContext';
+import ExportService from '../services/ExportService';
 
 export default function HistoryScreen({ navigation }) {
+    const { theme } = useTheme();
     const [history, setHistory] = useState([]);
     const [refreshing, setRefreshing] = useState(false);
 
@@ -40,22 +43,22 @@ export default function HistoryScreen({ navigation }) {
     const getSignalIcon = (signalType) => {
         switch (signalType) {
             case SIGNAL_TYPES.BUY:
-                return <TrendingUp color={COLORS.buy} size={20} />;
+                return <TrendingUp color={theme.buy} size={20} />;
             case SIGNAL_TYPES.SELL:
-                return <TrendingDown color={COLORS.sell} size={20} />;
+                return <TrendingDown color={theme.sell} size={20} />;
             default:
-                return <Minus color={COLORS.hold} size={20} />;
+                return <Minus color={theme.hold} size={20} />;
         }
     };
 
     const getSignalColor = (signalType) => {
         switch (signalType) {
             case SIGNAL_TYPES.BUY:
-                return COLORS.buy;
+                return theme.buy;
             case SIGNAL_TYPES.SELL:
-                return COLORS.sell;
+                return theme.sell;
             default:
-                return COLORS.hold;
+                return theme.hold;
         }
     };
 
@@ -71,13 +74,13 @@ export default function HistoryScreen({ navigation }) {
 
     const renderItem = ({ item }) => (
         <TouchableOpacity
-            style={styles.historyCard}
+            style={[styles.historyCard, { backgroundColor: theme.surface }]}
             onPress={() => navigation.navigate('Analysis', {
                 imageUri: item.imageUri,
                 existingResult: item
             })}
         >
-            <View style={styles.thumbnailContainer}>
+            <View style={[styles.thumbnailContainer, { backgroundColor: theme.surfaceLight }]}>
                 <Image source={{ uri: item.imageUri }} style={styles.thumbnail} />
             </View>
 
@@ -87,18 +90,18 @@ export default function HistoryScreen({ navigation }) {
                     <Text style={[styles.signalText, { color: getSignalColor(item.signal.action) }]}>
                         {item.signal.action}
                     </Text>
-                    <View style={styles.confidenceBadge}>
-                        <Text style={styles.confidenceText}>{item.signal.confidence}%</Text>
+                    <View style={[styles.confidenceBadge, { backgroundColor: theme.primary }]}>
+                        <Text style={[styles.confidenceText, { color: '#FFFFFF' }]}>{item.signal.confidence}%</Text>
                     </View>
                 </View>
 
-                <Text style={styles.patternCount}>
+                <Text style={[styles.patternCount, { color: theme.textSecondary }]}>
                     {item.patterns.length} pattern{item.patterns.length !== 1 ? 's' : ''} detected
                 </Text>
 
                 <View style={styles.timeRow}>
-                    <Clock color={COLORS.textSecondary} size={14} />
-                    <Text style={styles.timeText}>{formatDate(item.timestamp)}</Text>
+                    <Clock color={theme.textSecondary} size={14} />
+                    <Text style={[styles.timeText, { color: theme.textSecondary }]}>{formatDate(item.timestamp)}</Text>
                 </View>
             </View>
         </TouchableOpacity>
@@ -106,18 +109,18 @@ export default function HistoryScreen({ navigation }) {
 
     const renderEmpty = () => (
         <View style={styles.emptyContainer}>
-            <Clock color={COLORS.textSecondary} size={64} />
-            <Text style={styles.emptyTitle}>No History Yet</Text>
-            <Text style={styles.emptySubtitle}>
+            <Clock color={theme.textSecondary} size={64} />
+            <Text style={[styles.emptyTitle, { color: theme.text }]}>No History Yet</Text>
+            <Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
                 Your analyzed charts will appear here
             </Text>
         </View>
     );
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.title}>History</Text>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+            <View style={[styles.header, { borderBottomColor: theme.border }]}>
+                <Text style={[styles.title, { color: theme.text }]}>History</Text>
                 <View style={styles.headerActions}>
                     {history.length > 0 && (
                         <>
@@ -125,10 +128,10 @@ export default function HistoryScreen({ navigation }) {
                                 onPress={() => ExportService.exportHistoryToCSV(history)}
                                 style={styles.headerButton}
                             >
-                                <Share2 color={COLORS.primary} size={20} />
+                                <Share2 color={theme.primary} size={20} />
                             </TouchableOpacity>
                             <TouchableOpacity onPress={clearHistory} style={styles.headerButton}>
-                                <Trash2 color={COLORS.error} size={20} />
+                                <Trash2 color={theme.error} size={20} />
                             </TouchableOpacity>
                         </>
                     )}
@@ -145,7 +148,7 @@ export default function HistoryScreen({ navigation }) {
                     <RefreshControl
                         refreshing={refreshing}
                         onRefresh={onRefresh}
-                        tintColor={COLORS.primary}
+                        tintColor={theme.primary}
                     />
                 }
             />
@@ -156,7 +159,6 @@ export default function HistoryScreen({ navigation }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.background,
     },
     header: {
         flexDirection: 'row',
@@ -164,12 +166,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: SIZES.padding,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
     },
     title: {
         fontSize: SIZES.xxl,
         fontWeight: 'bold',
-        color: COLORS.text,
     },
     headerActions: {
         flexDirection: 'row',
@@ -185,7 +185,6 @@ const styles = StyleSheet.create({
     },
     historyCard: {
         flexDirection: 'row',
-        backgroundColor: COLORS.surface,
         borderRadius: SIZES.radius,
         padding: 12,
         marginBottom: 12,
@@ -195,7 +194,6 @@ const styles = StyleSheet.create({
         height: 80,
         borderRadius: 8,
         overflow: 'hidden',
-        backgroundColor: COLORS.surfaceLight,
     },
     thumbnail: {
         width: '100%',
@@ -217,7 +215,6 @@ const styles = StyleSheet.create({
         marginLeft: 8,
     },
     confidenceBadge: {
-        backgroundColor: COLORS.primary,
         paddingHorizontal: 8,
         paddingVertical: 2,
         borderRadius: 12,
@@ -226,11 +223,9 @@ const styles = StyleSheet.create({
     confidenceText: {
         fontSize: SIZES.xs,
         fontWeight: '600',
-        color: COLORS.text,
     },
     patternCount: {
         fontSize: SIZES.sm,
-        color: COLORS.textSecondary,
     },
     timeRow: {
         flexDirection: 'row',
@@ -238,7 +233,6 @@ const styles = StyleSheet.create({
     },
     timeText: {
         fontSize: SIZES.sm,
-        color: COLORS.textSecondary,
         marginLeft: 4,
     },
     emptyContainer: {
@@ -250,12 +244,10 @@ const styles = StyleSheet.create({
     emptyTitle: {
         fontSize: SIZES.xl,
         fontWeight: '600',
-        color: COLORS.text,
         marginTop: 16,
     },
     emptySubtitle: {
         fontSize: SIZES.md,
-        color: COLORS.textSecondary,
         marginTop: 8,
     },
 });

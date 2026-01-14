@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Shield, Bell, Moon, Trash2, Info, ExternalLink } from 'lucide-react-native';
-import { COLORS, SIZES, RISK_LEVELS, NOTIFICATION_THRESHOLDS } from '../constants';
+import { SIZES, RISK_LEVELS, NOTIFICATION_THRESHOLDS } from '../constants';
 import StorageService from '../services/StorageService';
 import NotificationService from '../services/NotificationService';
+import { useTheme } from '../context/ThemeContext';
 
 export default function SettingsScreen() {
-    const [darkMode, setDarkMode] = useState(true);
+    const { isDarkMode, theme, toggleTheme } = useTheme();
     const [notifications, setNotifications] = useState(true);
     const [notificationThreshold, setNotificationThreshold] = useState(NOTIFICATION_THRESHOLDS.HIGH);
     const [riskLevel, setRiskLevel] = useState('MODERATE');
@@ -19,7 +20,6 @@ export default function SettingsScreen() {
     const loadSettings = async () => {
         const settings = await StorageService.getSettings();
         if (settings) {
-            setDarkMode(settings.darkMode ?? true);
             setNotifications(settings.notificationsEnabled ?? true);
             setNotificationThreshold(settings.notificationThreshold ?? NOTIFICATION_THRESHOLDS.HIGH);
             setRiskLevel(settings.riskLevel ?? 'MODERATE');
@@ -32,11 +32,6 @@ export default function SettingsScreen() {
             ...currentSettings,
             [key]: value,
         });
-    };
-
-    const handleDarkModeChange = (value) => {
-        setDarkMode(value);
-        saveSettings('darkMode', value);
     };
 
     const handleNotificationsChange = (value) => {
@@ -74,8 +69,7 @@ export default function SettingsScreen() {
                     style: 'destructive',
                     onPress: async () => {
                         await StorageService.clearAll();
-                        // Reset local state
-                        setDarkMode(true);
+                        // Reset local state (theme is kept as is or reset via toggle)
                         setNotifications(true);
                         setNotificationThreshold(NOTIFICATION_THRESHOLDS.HIGH);
                         setRiskLevel('MODERATE');
@@ -87,17 +81,17 @@ export default function SettingsScreen() {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
             <ScrollView contentContainerStyle={styles.scrollContent}>
-                <Text style={styles.title}>Settings</Text>
+                <Text style={[styles.title, { color: theme.text }]}>Settings</Text>
 
                 {/* Risk Management Section */}
-                <Text style={styles.sectionTitle}>Risk Management</Text>
-                <View style={styles.card}>
-                    <View style={styles.settingRow}>
+                <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Risk Management</Text>
+                <View style={[styles.card, { backgroundColor: theme.surface }]}>
+                    <View style={[styles.settingRow, { borderBottomColor: 'transparent' }]}>
                         <View style={styles.settingInfo}>
-                            <Shield color={COLORS.primary} size={20} />
-                            <Text style={styles.settingLabel}>Risk Tolerance</Text>
+                            <Shield color={theme.primary} size={20} />
+                            <Text style={[styles.settingLabel, { color: theme.text }]}>Risk Tolerance</Text>
                         </View>
                     </View>
 
@@ -107,17 +101,19 @@ export default function SettingsScreen() {
                                 key={key}
                                 style={[
                                     styles.riskOption,
-                                    riskLevel === key && styles.riskOptionActive,
+                                    { backgroundColor: theme.surfaceLight },
+                                    riskLevel === key && { borderColor: theme.primary, backgroundColor: isDarkMode ? 'rgba(99, 102, 241, 0.1)' : 'rgba(99, 102, 241, 0.05)' },
                                 ]}
                                 onPress={() => handleRiskLevelChange(key)}
                             >
                                 <Text style={[
                                     styles.riskOptionText,
-                                    riskLevel === key && styles.riskOptionTextActive,
+                                    { color: theme.text },
+                                    riskLevel === key && { color: theme.primary },
                                 ]}>
                                     {config.label}
                                 </Text>
-                                <Text style={styles.riskDetail}>
+                                <Text style={[styles.riskDetail, { color: theme.textSecondary }]}>
                                     SL: {config.stopLossPercent}% / TP: {config.takeProfitPercent}%
                                 </Text>
                             </TouchableOpacity>
@@ -126,55 +122,57 @@ export default function SettingsScreen() {
                 </View>
 
                 {/* Appearance Section */}
-                <Text style={styles.sectionTitle}>Appearance</Text>
-                <View style={styles.card}>
-                    <View style={styles.settingRow}>
+                <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Appearance</Text>
+                <View style={[styles.card, { backgroundColor: theme.surface }]}>
+                    <View style={[styles.settingRow, { borderBottomColor: theme.border }]}>
                         <View style={styles.settingInfo}>
-                            <Moon color={COLORS.primary} size={20} />
-                            <Text style={styles.settingLabel}>Dark Mode</Text>
+                            <Moon color={theme.primary} size={20} />
+                            <Text style={[styles.settingLabel, { color: theme.text }]}>Dark Mode</Text>
                         </View>
                         <Switch
-                            value={darkMode}
-                            onValueChange={handleDarkModeChange}
-                            trackColor={{ false: COLORS.surfaceLight, true: COLORS.primary }}
-                            thumbColor={COLORS.text}
+                            value={isDarkMode}
+                            onValueChange={toggleTheme}
+                            trackColor={{ false: theme.surfaceLight, true: theme.primary }}
+                            thumbColor={theme.text}
                         />
                     </View>
                 </View>
 
                 {/* Notifications Section */}
-                <Text style={styles.sectionTitle}>Notifications</Text>
-                <View style={styles.card}>
-                    <View style={styles.settingRow}>
+                <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Notifications</Text>
+                <View style={[styles.card, { backgroundColor: theme.surface }]}>
+                    <View style={[styles.settingRow, { borderBottomColor: theme.border }]}>
                         <View style={styles.settingInfo}>
-                            <Bell color={COLORS.primary} size={20} />
-                            <Text style={styles.settingLabel}>Signal Alerts</Text>
+                            <Bell color={theme.primary} size={20} />
+                            <Text style={[styles.settingLabel, { color: theme.text }]}>Signal Alerts</Text>
                         </View>
                         <Switch
                             value={notifications}
                             onValueChange={handleNotificationsChange}
-                            trackColor={{ false: COLORS.surfaceLight, true: COLORS.primary }}
-                            thumbColor={COLORS.text}
+                            trackColor={{ false: theme.surfaceLight, true: theme.primary }}
+                            thumbColor={theme.text}
                             disabled={NotificationService.isEnvironmentDisabled()}
                         />
                     </View>
 
                     {!NotificationService.isEnvironmentDisabled() && notifications && (
-                        <View style={styles.thresholdSection}>
-                            <Text style={styles.subSectionTitle}>Alert Confidence Threshold</Text>
+                        <View style={[styles.thresholdSection, { backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)' }]}>
+                            <Text style={[styles.subSectionTitle, { color: theme.textSecondary }]}>Alert Confidence Threshold</Text>
                             <View style={styles.thresholdOptions}>
                                 {Object.entries(NOTIFICATION_THRESHOLDS).map(([key, value]) => (
                                     <TouchableOpacity
                                         key={key}
                                         style={[
                                             styles.thresholdOption,
-                                            notificationThreshold === value && styles.thresholdOptionActive,
+                                            { backgroundColor: theme.surfaceLight },
+                                            notificationThreshold === value && { borderColor: theme.primary, backgroundColor: isDarkMode ? 'rgba(99, 102, 241, 0.1)' : 'rgba(99, 102, 241, 0.05)' },
                                         ]}
                                         onPress={() => handleThresholdChange(value)}
                                     >
                                         <Text style={[
                                             styles.thresholdText,
-                                            notificationThreshold === value && styles.thresholdTextActive,
+                                            { color: theme.textSecondary },
+                                            notificationThreshold === value && { color: theme.primary, fontWeight: 'bold' },
                                         ]}>
                                             {key} ({value}%)
                                         </Text>
@@ -183,18 +181,18 @@ export default function SettingsScreen() {
                             </View>
 
                             <TouchableOpacity
-                                style={styles.testButton}
+                                style={[styles.testButton, { borderColor: theme.primary }]}
                                 onPress={handleTestNotification}
                             >
-                                <Bell color={COLORS.primary} size={16} />
-                                <Text style={styles.testButtonText}>Send Test Alert</Text>
+                                <Bell color={theme.primary} size={16} />
+                                <Text style={[styles.testButtonText, { color: theme.primary }]}>Send Test Alert</Text>
                             </TouchableOpacity>
                         </View>
                     )}
                     {NotificationService.isEnvironmentDisabled() && (
-                        <View style={styles.warningBox}>
-                            <Info color={COLORS.warning} size={16} />
-                            <Text style={styles.warningText}>
+                        <View style={[styles.warningBox, { backgroundColor: theme.warningBackground }]}>
+                            <Info color={theme.warning} size={16} />
+                            <Text style={[styles.warningText, { color: theme.warning }]}>
                                 Push notifications are limited in Expo Go (Android).
                                 Use a development build for full support.
                             </Text>
@@ -203,12 +201,12 @@ export default function SettingsScreen() {
                 </View>
 
                 {/* Data Section */}
-                <Text style={styles.sectionTitle}>Data</Text>
-                <View style={styles.card}>
-                    <TouchableOpacity style={styles.settingRow} onPress={handleClearData}>
+                <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Data</Text>
+                <View style={[styles.card, { backgroundColor: theme.surface }]}>
+                    <TouchableOpacity style={[styles.settingRow, { borderBottomColor: 'transparent' }]} onPress={handleClearData}>
                         <View style={styles.settingInfo}>
-                            <Trash2 color={COLORS.error} size={20} />
-                            <Text style={[styles.settingLabel, { color: COLORS.error }]}>
+                            <Trash2 color={theme.error} size={20} />
+                            <Text style={[styles.settingLabel, { color: theme.error }]}>
                                 Clear All Data
                             </Text>
                         </View>
@@ -216,27 +214,24 @@ export default function SettingsScreen() {
                 </View>
 
                 {/* About Section */}
-                <Text style={styles.sectionTitle}>About</Text>
-                <View style={styles.card}>
-                    <View style={styles.settingRow}>
+                <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>About</Text>
+                <View style={[styles.card, { backgroundColor: theme.surface }]}>
+                    <View style={[styles.settingRow, { borderBottomColor: 'transparent' }]}>
                         <View style={styles.settingInfo}>
-                            <Info color={COLORS.primary} size={20} />
-                            <Text style={styles.settingLabel}>Version</Text>
+                            <Info color={theme.primary} size={20} />
+                            <Text style={[styles.settingLabel, { color: theme.text }]}>Version</Text>
                         </View>
-                        <Text style={styles.settingValue}>1.0.0</Text>
+                        <Text style={[styles.settingValue, { color: theme.textSecondary }]}>1.0.0</Text>
                     </View>
                 </View>
 
                 {/* Disclaimer */}
-                <View style={styles.disclaimer}>
-                    <Text style={styles.disclaimerTitle}>⚠️ Important Disclaimer</Text>
-                    <Text style={styles.disclaimerText}>
-                        This application is for educational and informational purposes only.
-                        It is NOT financial advice. Trading carries significant risk of loss.
-                        Never invest money you cannot afford to lose. Always do your own research
-                        and consult with a licensed financial advisor before making any investment decisions.
-                    </Text>
-                </View>
+                <Text style={[styles.disclaimerText, { color: theme.textSecondary, textAlign: 'center', marginTop: 32, paddingHorizontal: 20 }]}>
+                    This application is for educational and informational purposes only.
+                    It is NOT financial advice. Trading carries significant risk of loss.
+                    Never invest money you cannot afford to lose. Always do your own research
+                    and consult with a licensed financial advisor before making any investment decisions.
+                </Text>
             </ScrollView>
         </SafeAreaView>
     );
@@ -245,26 +240,23 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.background,
     },
     scrollContent: {
         padding: SIZES.padding,
+        paddingBottom: 40,
     },
     title: {
         fontSize: SIZES.xxxl,
         fontWeight: 'bold',
-        color: COLORS.text,
         marginBottom: 24,
     },
     sectionTitle: {
         fontSize: SIZES.lg,
         fontWeight: '600',
-        color: COLORS.textSecondary,
         marginBottom: 12,
         marginTop: 16,
     },
     card: {
-        backgroundColor: COLORS.surface,
         borderRadius: SIZES.radius,
         overflow: 'hidden',
     },
@@ -274,7 +266,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: SIZES.padding,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
     },
     settingInfo: {
         flexDirection: 'row',
@@ -282,69 +273,51 @@ const styles = StyleSheet.create({
     },
     settingLabel: {
         fontSize: SIZES.md,
-        color: COLORS.text,
         marginLeft: 12,
     },
     settingValue: {
         fontSize: SIZES.md,
-        color: COLORS.textSecondary,
     },
     riskOptions: {
         padding: SIZES.padding,
     },
     riskOption: {
-        backgroundColor: COLORS.surfaceLight,
         borderRadius: 8,
         padding: 12,
         marginBottom: 8,
         borderWidth: 2,
         borderColor: 'transparent',
     },
-    riskOptionActive: {
-        borderColor: COLORS.primary,
-        backgroundColor: 'rgba(99, 102, 241, 0.1)',
-    },
     riskOptionText: {
         fontSize: SIZES.md,
         fontWeight: '600',
-        color: COLORS.text,
-    },
-    riskOptionTextActive: {
-        color: COLORS.primary,
     },
     riskDetail: {
         fontSize: SIZES.sm,
-        color: COLORS.textSecondary,
         marginTop: 4,
     },
     disclaimer: {
-        backgroundColor: COLORS.surface,
         borderRadius: SIZES.radius,
         padding: SIZES.padding,
         marginTop: 24,
         borderLeftWidth: 4,
-        borderLeftColor: COLORS.warning,
     },
     disclaimerTitle: {
         fontSize: SIZES.md,
         fontWeight: '600',
-        color: COLORS.warning,
         marginBottom: 8,
     },
     disclaimerText: {
         fontSize: SIZES.sm,
-        color: COLORS.textSecondary,
         lineHeight: 20,
     },
     thresholdSection: {
         padding: SIZES.padding,
         paddingTop: 0,
-        backgroundColor: 'rgba(255, 255, 255, 0.02)',
     },
     subSectionTitle: {
         fontSize: SIZES.sm,
         fontWeight: '600',
-        color: COLORS.textSecondary,
         marginBottom: 12,
         marginTop: 8,
     },
@@ -354,7 +327,6 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     thresholdOption: {
-        backgroundColor: COLORS.surfaceLight,
         borderRadius: 20,
         paddingHorizontal: 12,
         paddingVertical: 6,
@@ -363,17 +335,8 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: 'transparent',
     },
-    thresholdOptionActive: {
-        borderColor: COLORS.primary,
-        backgroundColor: 'rgba(99, 102, 241, 0.1)',
-    },
     thresholdText: {
         fontSize: SIZES.xs,
-        color: COLORS.textSecondary,
-    },
-    thresholdTextActive: {
-        color: COLORS.primary,
-        fontWeight: 'bold',
     },
     testButton: {
         flexDirection: 'row',
@@ -382,12 +345,10 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: COLORS.primary,
         borderStyle: 'dashed',
     },
     testButtonText: {
         fontSize: SIZES.sm,
-        color: COLORS.primary,
         marginLeft: 8,
         fontWeight: '600',
     },
@@ -402,7 +363,6 @@ const styles = StyleSheet.create({
     },
     warningText: {
         fontSize: SIZES.xs,
-        color: COLORS.warning,
         marginLeft: 8,
         flex: 1,
     },

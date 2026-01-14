@@ -2,12 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BarChart2, PieChart, TrendingUp, TrendingDown, Target, Brain } from 'lucide-react-native';
-import { COLORS, SIZES } from '../constants';
+import { SIZES } from '../constants';
 import BacktestingService from '../services/BacktestingService';
+import { useTheme } from '../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
 export default function BacktestingScreen() {
+    const { theme, isDarkMode } = useTheme();
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState(null);
     const [refreshing, setRefreshing] = useState(false);
@@ -36,136 +38,136 @@ export default function BacktestingScreen() {
 
     if (loading && !refreshing) {
         return (
-            <SafeAreaView style={styles.container}>
+            <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
                 <View style={[styles.container, styles.center]}>
-                    <Text style={styles.loadingText}>Loading analytics...</Text>
+                    <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Loading analytics...</Text>
                 </View>
             </SafeAreaView>
         );
     }
 
     const StatCard = ({ title, value, subValue, icon: Icon, color }) => (
-        <View style={styles.statCard}>
+        <View style={[styles.statCard, { backgroundColor: theme.surface }]}>
             <View style={[styles.iconContainer, { backgroundColor: `${color}15` }]}>
                 <Icon color={color} size={24} />
             </View>
             <View style={styles.statInfo}>
-                <Text style={styles.statLabel}>{title}</Text>
-                <Text style={styles.statValue}>{value}</Text>
-                {subValue && <Text style={styles.statSubValue}>{subValue}</Text>}
+                <Text style={[styles.statLabel, { color: theme.textSecondary }]}>{title}</Text>
+                <Text style={[styles.statValue, { color: theme.text }]}>{value}</Text>
+                {subValue && <Text style={[styles.statSubValue, { color: theme.textSecondary }]}>{subValue}</Text>}
             </View>
         </View>
     );
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
                 refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
                 }
             >
-                <Text style={styles.title}>Performance Analytics</Text>
+                <Text style={[styles.title, { color: theme.text }]}>Performance Analytics</Text>
 
                 <View style={styles.statsGrid}>
                     <StatCard
                         title="Total Analyses"
                         value={stats?.totalAnalyses || 0}
                         icon={BarChart2}
-                        color={COLORS.primary}
+                        color={theme.primary}
                     />
                     <StatCard
                         title="Avg. Confidence"
                         value={`${stats?.avgConfidence || 0}%`}
                         icon={Brain}
-                        color={COLORS.accent}
+                        color={theme.accent}
                     />
                     <StatCard
                         title="Win Rate"
                         value={`${stats?.winRate || 0}%`}
                         subValue="Estimated"
                         icon={Target}
-                        color={COLORS.secondary}
+                        color={theme.buy}
                     />
                 </View>
 
-                <Text style={styles.sectionTitle}>Signal Distribution</Text>
-                <View style={styles.chartCard}>
+                <Text style={[styles.sectionTitle, { color: theme.text }]}>Signal Distribution</Text>
+                <View style={[styles.chartCard, { backgroundColor: theme.surface }]}>
                     <View style={styles.distRow}>
                         <View style={styles.distItem}>
-                            <TrendingUp color={COLORS.buy} size={20} />
-                            <Text style={styles.distLabel}>BUY</Text>
-                            <Text style={[styles.distValue, { color: COLORS.buy }]}>
+                            <TrendingUp color={theme.buy} size={20} />
+                            <Text style={[styles.distLabel, { color: theme.textSecondary }]}>BUY</Text>
+                            <Text style={[styles.distValue, { color: theme.buy }]}>
                                 {stats?.signalDistribution.BUY || 0}
                             </Text>
                         </View>
                         <View style={styles.distItem}>
-                            <TrendingDown color={COLORS.sell} size={20} />
-                            <Text style={styles.distLabel}>SELL</Text>
-                            <Text style={[styles.distValue, { color: COLORS.sell }]}>
+                            <TrendingDown color={theme.sell} size={20} />
+                            <Text style={[styles.distLabel, { color: theme.textSecondary }]}>SELL</Text>
+                            <Text style={[styles.distValue, { color: theme.sell }]}>
                                 {stats?.signalDistribution.SELL || 0}
                             </Text>
                         </View>
                         <View style={styles.distItem}>
-                            <PieChart color={COLORS.hold} size={20} />
-                            <Text style={styles.distLabel}>HOLD</Text>
-                            <Text style={[styles.distValue, { color: COLORS.hold }]}>
+                            <PieChart color={theme.hold} size={20} />
+                            <Text style={[styles.distLabel, { color: theme.textSecondary }]}>HOLD</Text>
+                            <Text style={[styles.distValue, { color: theme.hold }]}>
                                 {stats?.signalDistribution.HOLD || 0}
                             </Text>
                         </View>
                     </View>
 
                     {/* Simplified Bar Chart visualization */}
-                    <View style={styles.barContainer}>
+                    <View style={[styles.barContainer, { backgroundColor: theme.surfaceLight }]}>
                         {stats?.totalAnalyses > 0 ? (
                             <>
                                 <View style={[styles.bar, {
                                     flex: stats.signalDistribution.BUY,
-                                    backgroundColor: COLORS.buy,
+                                    backgroundColor: theme.buy,
                                     borderTopLeftRadius: 4, borderBottomLeftRadius: 4
                                 }]} />
                                 <View style={[styles.bar, {
                                     flex: stats.signalDistribution.SELL,
-                                    backgroundColor: COLORS.sell
+                                    backgroundColor: theme.sell
                                 }]} />
                                 <View style={[styles.bar, {
                                     flex: stats.signalDistribution.HOLD,
-                                    backgroundColor: COLORS.hold,
+                                    backgroundColor: theme.hold,
                                     borderTopRightRadius: 4, borderBottomRightRadius: 4
                                 }]} />
                             </>
                         ) : (
-                            <View style={[styles.bar, { flex: 1, backgroundColor: COLORS.surfaceLight }]} />
+                            <View style={[styles.bar, { flex: 1, backgroundColor: theme.surfaceLight }]} />
                         )}
                     </View>
                 </View>
 
-                <Text style={styles.sectionTitle}>Top Performing Patterns</Text>
-                <View style={styles.patternsCard}>
+                <Text style={[styles.sectionTitle, { color: theme.text }]}>Top Performing Patterns</Text>
+                <View style={[styles.patternsCard, { backgroundColor: theme.surface }]}>
                     {stats?.topPatterns.length > 0 ? (
                         stats.topPatterns.map((pattern, index) => (
-                            <View key={index} style={styles.patternItem}>
-                                <Text style={styles.patternName}>{pattern.name}</Text>
+                            <View key={index} style={[styles.patternItem, { borderBottomColor: theme.border }]}>
+                                <Text style={[styles.patternName, { color: theme.text }]}>{pattern.name}</Text>
                                 <View style={styles.patternRight}>
-                                    <Text style={styles.patternCount}>{pattern.count} times</Text>
-                                    <View style={styles.miniBarContainer}>
+                                    <Text style={[styles.patternCount, { color: theme.textSecondary }]}>{pattern.count} times</Text>
+                                    <View style={[styles.miniBarContainer, { backgroundColor: theme.surfaceLight }]}>
                                         <View style={[styles.miniBar, {
-                                            width: `${(pattern.count / stats.totalAnalyses) * 100}%`
+                                            width: `${(pattern.count / (stats.totalAnalyses || 1)) * 100}%`,
+                                            backgroundColor: theme.primary
                                         }]} />
                                     </View>
                                 </View>
                             </View>
                         ))
                     ) : (
-                        <Text style={styles.emptyText}>No patterns detected yet</Text>
+                        <Text style={[styles.emptyText, { color: theme.textSecondary }]}>No patterns detected yet</Text>
                     )}
                 </View>
 
-                <View style={styles.infoCard}>
-                    <Brain color={COLORS.primary} size={24} />
-                    <Text style={styles.infoText}>
-                        Analytics are based on your total analysis history. Use the Mark Outcome feature
-                        in History to track actual trade results for more accurate metrics.
+                <View style={[styles.infoCard, { backgroundColor: isDarkMode ? 'rgba(99, 102, 241, 0.1)' : 'rgba(99, 102, 241, 0.05)' }]}>
+                    <Brain color={theme.primary} size={24} />
+                    <Text style={[styles.infoText, { color: theme.textSecondary }]}>
+                        Analytics are based on your total analysis history. Use history to track actual results.
                     </Text>
                 </View>
             </ScrollView>
@@ -176,7 +178,6 @@ export default function BacktestingScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.background,
     },
     center: {
         justifyContent: 'center',
@@ -188,11 +189,9 @@ const styles = StyleSheet.create({
     title: {
         fontSize: SIZES.xxl,
         fontWeight: 'bold',
-        color: COLORS.text,
         marginBottom: 24,
     },
     loadingText: {
-        color: COLORS.textSecondary,
         fontSize: SIZES.md,
     },
     statsGrid: {
@@ -203,7 +202,6 @@ const styles = StyleSheet.create({
     },
     statCard: {
         width: (width - SIZES.padding * 2 - 12) / 2,
-        backgroundColor: COLORS.surface,
         borderRadius: SIZES.radius,
         padding: 16,
         marginBottom: 12,
@@ -223,27 +221,22 @@ const styles = StyleSheet.create({
     },
     statLabel: {
         fontSize: SIZES.xs,
-        color: COLORS.textSecondary,
         marginBottom: 4,
     },
     statValue: {
         fontSize: SIZES.lg,
         fontWeight: 'bold',
-        color: COLORS.text,
     },
     statSubValue: {
         fontSize: 10,
-        color: COLORS.textSecondary,
         marginTop: 2,
     },
     sectionTitle: {
         fontSize: SIZES.lg,
         fontWeight: '600',
-        color: COLORS.text,
         marginBottom: 12,
     },
     chartCard: {
-        backgroundColor: COLORS.surface,
         borderRadius: SIZES.radius,
         padding: SIZES.padding,
         marginBottom: 24,
@@ -258,7 +251,6 @@ const styles = StyleSheet.create({
     },
     distLabel: {
         fontSize: SIZES.xs,
-        color: COLORS.textSecondary,
         marginTop: 4,
     },
     distValue: {
@@ -269,7 +261,6 @@ const styles = StyleSheet.create({
     barContainer: {
         height: 12,
         flexDirection: 'row',
-        backgroundColor: COLORS.surfaceLight,
         borderRadius: 6,
         overflow: 'hidden',
     },
@@ -277,7 +268,6 @@ const styles = StyleSheet.create({
         height: '100%',
     },
     patternsCard: {
-        backgroundColor: COLORS.surface,
         borderRadius: SIZES.radius,
         padding: SIZES.padding,
         marginBottom: 24,
@@ -288,11 +278,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
     },
     patternName: {
         fontSize: SIZES.md,
-        color: COLORS.text,
         flex: 1,
     },
     patternRight: {
@@ -301,18 +289,15 @@ const styles = StyleSheet.create({
     },
     patternCount: {
         fontSize: SIZES.sm,
-        color: COLORS.textSecondary,
         marginBottom: 4,
     },
     miniBarContainer: {
         width: 80,
         height: 4,
-        backgroundColor: COLORS.surfaceLight,
         borderRadius: 2,
     },
     miniBar: {
         height: '100%',
-        backgroundColor: COLORS.primary,
         borderRadius: 2,
     },
     infoCard: {
@@ -326,14 +311,12 @@ const styles = StyleSheet.create({
     infoText: {
         flex: 1,
         fontSize: SIZES.sm,
-        color: COLORS.textSecondary,
         marginLeft: 12,
         lineHeight: 20,
     },
     emptyText: {
         textAlign: 'center',
         paddingVertical: 20,
-        color: COLORS.textSecondary,
         fontSize: SIZES.md,
     },
 });

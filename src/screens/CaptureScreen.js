@@ -3,9 +3,11 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-na
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Aperture, X, RotateCcw, Check } from 'lucide-react-native';
-import { COLORS, SIZES } from '../constants';
+import { SIZES } from '../constants';
+import { useTheme } from '../context/ThemeContext';
 
 export default function CaptureScreen({ navigation }) {
+    const { theme } = useTheme();
     const [permission, requestPermission] = useCameraPermissions();
     const [capturedImage, setCapturedImage] = useState(null);
     const [facing, setFacing] = useState('back');
@@ -13,22 +15,22 @@ export default function CaptureScreen({ navigation }) {
 
     if (!permission) {
         return (
-            <SafeAreaView style={styles.container}>
-                <Text style={styles.text}>Loading camera...</Text>
+            <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+                <Text style={[styles.text, { color: theme.textSecondary }]}>Loading camera...</Text>
             </SafeAreaView>
         );
     }
 
     if (!permission.granted) {
         return (
-            <SafeAreaView style={styles.container}>
+            <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
                 <View style={styles.permissionContainer}>
-                    <Aperture color={COLORS.primary} size={64} />
-                    <Text style={styles.title}>Camera Permission Needed</Text>
-                    <Text style={styles.subtitle}>
+                    <Aperture color={theme.primary} size={64} />
+                    <Text style={[styles.title, { color: theme.text }]}>Camera Permission Needed</Text>
+                    <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
                         We need camera access to capture candlestick charts for analysis.
                     </Text>
-                    <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
+                    <TouchableOpacity style={[styles.permissionButton, { backgroundColor: theme.primary }]} onPress={requestPermission}>
                         <Text style={styles.permissionButtonText}>Grant Permission</Text>
                     </TouchableOpacity>
                 </View>
@@ -66,7 +68,7 @@ export default function CaptureScreen({ navigation }) {
 
     if (capturedImage) {
         return (
-            <SafeAreaView style={styles.container}>
+            <SafeAreaView style={[styles.container, { backgroundColor: '#000' }]}>
                 <View style={styles.previewContainer}>
                     <Image source={{ uri: capturedImage }} style={styles.previewImage} />
 
@@ -78,18 +80,18 @@ export default function CaptureScreen({ navigation }) {
 
                     <View style={styles.previewHeader}>
                         <TouchableOpacity style={styles.closeButton} onPress={retakePicture}>
-                            <X color={COLORS.text} size={24} />
+                            <X color="#FFFFFF" size={24} />
                         </TouchableOpacity>
                     </View>
 
                     <View style={styles.previewFooter}>
                         <TouchableOpacity style={styles.retakeButton} onPress={retakePicture}>
-                            <RotateCcw color={COLORS.text} size={24} />
+                            <RotateCcw color="#FFFFFF" size={24} />
                             <Text style={styles.buttonLabel}>Retake</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity style={styles.analyzeButton} onPress={analyzeImage}>
-                            <Check color={COLORS.text} size={24} />
+                        <TouchableOpacity style={[styles.analyzeButton, { backgroundColor: theme.primary }]} onPress={analyzeImage}>
+                            <Check color="#FFFFFF" size={24} />
                             <Text style={styles.buttonLabel}>Analyze</Text>
                         </TouchableOpacity>
                     </View>
@@ -99,7 +101,7 @@ export default function CaptureScreen({ navigation }) {
     }
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: '#000' }]}>
             <CameraView
                 style={styles.camera}
                 facing={facing}
@@ -108,21 +110,21 @@ export default function CaptureScreen({ navigation }) {
                 {/* Header */}
                 <View style={styles.cameraHeader}>
                     <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
-                        <X color={COLORS.text} size={24} />
+                        <X color="#FFFFFF" size={24} />
                     </TouchableOpacity>
                     <Text style={styles.headerText}>Position chart in frame</Text>
                     <TouchableOpacity style={styles.flipButton} onPress={toggleCameraFacing}>
-                        <RotateCcw color={COLORS.text} size={20} />
+                        <RotateCcw color="#FFFFFF" size={20} />
                     </TouchableOpacity>
                 </View>
 
                 {/* Chart Detection Overlay */}
                 <View style={styles.chartOverlay}>
                     <View style={styles.chartFrame}>
-                        <View style={[styles.corner, styles.topLeft]} />
-                        <View style={[styles.corner, styles.topRight]} />
-                        <View style={[styles.corner, styles.bottomLeft]} />
-                        <View style={[styles.corner, styles.bottomRight]} />
+                        <View style={[styles.corner, styles.topLeft, { borderColor: theme.primary }]} />
+                        <View style={[styles.corner, styles.topRight, { borderColor: theme.primary }]} />
+                        <View style={[styles.corner, styles.bottomLeft, { borderColor: theme.primary }]} />
+                        <View style={[styles.corner, styles.bottomRight, { borderColor: theme.primary }]} />
                     </View>
                     <Text style={styles.overlayHint}>Align candlestick chart within frame</Text>
                 </View>
@@ -141,13 +143,11 @@ export default function CaptureScreen({ navigation }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.background,
     },
     camera: {
         flex: 1,
     },
     text: {
-        color: COLORS.text,
         fontSize: SIZES.lg,
         textAlign: 'center',
         marginTop: 100,
@@ -161,19 +161,16 @@ const styles = StyleSheet.create({
     title: {
         fontSize: SIZES.xxl,
         fontWeight: 'bold',
-        color: COLORS.text,
         marginTop: 24,
         textAlign: 'center',
     },
     subtitle: {
         fontSize: SIZES.md,
-        color: COLORS.textSecondary,
         marginTop: 12,
         textAlign: 'center',
         lineHeight: 22,
     },
     permissionButton: {
-        backgroundColor: COLORS.primary,
         paddingVertical: 14,
         paddingHorizontal: 32,
         borderRadius: SIZES.radius,
@@ -182,7 +179,6 @@ const styles = StyleSheet.create({
     permissionButtonText: {
         fontSize: SIZES.lg,
         fontWeight: '600',
-        color: COLORS.text,
     },
     cameraHeader: {
         flexDirection: 'row',
@@ -192,7 +188,6 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0,0,0,0.5)',
     },
     headerText: {
-        color: COLORS.text,
         fontSize: SIZES.md,
         fontWeight: '500',
     },
@@ -216,7 +211,6 @@ const styles = StyleSheet.create({
         position: 'absolute',
         width: 30,
         height: 30,
-        borderColor: COLORS.primary,
     },
     topLeft: {
         top: 0,
@@ -243,7 +237,6 @@ const styles = StyleSheet.create({
         borderRightWidth: 3,
     },
     overlayHint: {
-        color: COLORS.text,
         fontSize: SIZES.sm,
         marginTop: 16,
         backgroundColor: 'rgba(0,0,0,0.5)',
@@ -268,7 +261,7 @@ const styles = StyleSheet.create({
         width: 64,
         height: 64,
         borderRadius: 32,
-        backgroundColor: COLORS.text,
+        backgroundColor: '#FFFFFF',
     },
     previewContainer: {
         flex: 1,
@@ -317,12 +310,10 @@ const styles = StyleSheet.create({
     analyzeButton: {
         alignItems: 'center',
         padding: 12,
-        backgroundColor: COLORS.primary,
         borderRadius: SIZES.radius,
         paddingHorizontal: 32,
     },
     buttonLabel: {
-        color: COLORS.text,
         fontSize: SIZES.sm,
         marginTop: 4,
     },

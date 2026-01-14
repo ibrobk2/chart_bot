@@ -2,21 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { TrendingUp, TrendingDown, Minus, AlertTriangle, Target, Shield, Share2 } from 'lucide-react-native';
-import { COLORS, SIZES, SIGNAL_TYPES, CONFIDENCE_LEVELS, RISK_LEVELS } from '../constants';
+import { SIZES, SIGNAL_TYPES, CONFIDENCE_LEVELS, RISK_LEVELS } from '../constants';
 import PatternRecognitionService from '../services/PatternRecognitionService';
 import SignalEngine from '../services/SignalEngine';
 import NotificationService from '../services/NotificationService';
 import StorageService from '../services/StorageService';
 import ExportService from '../services/ExportService';
+import { useTheme } from '../context/ThemeContext';
 
 export default function AnalysisScreen({ route, navigation }) {
-    const { imageUri } = route.params;
-    const [loading, setLoading] = useState(true);
-    const [result, setResult] = useState(null);
+    const { theme, isDarkMode } = useTheme();
+    const { imageUri, existingResult } = route.params;
+    const [loading, setLoading] = useState(!existingResult);
+    const [result, setResult] = useState(existingResult || null);
 
     useEffect(() => {
-        analyzeChart();
-    }, []);
+        if (!existingResult) {
+            analyzeChart();
+        }
+    }, [existingResult]);
 
     const analyzeChart = async () => {
         try {
@@ -56,38 +60,38 @@ export default function AnalysisScreen({ route, navigation }) {
     const getSignalIcon = (signalType) => {
         switch (signalType) {
             case SIGNAL_TYPES.BUY:
-                return <TrendingUp color={COLORS.buy} size={32} />;
+                return <TrendingUp color={theme.buy} size={32} />;
             case SIGNAL_TYPES.SELL:
-                return <TrendingDown color={COLORS.sell} size={32} />;
+                return <TrendingDown color={theme.sell} size={32} />;
             default:
-                return <Minus color={COLORS.hold} size={32} />;
+                return <Minus color={theme.hold} size={32} />;
         }
     };
 
     const getSignalColor = (signalType) => {
         switch (signalType) {
             case SIGNAL_TYPES.BUY:
-                return COLORS.buy;
+                return theme.buy;
             case SIGNAL_TYPES.SELL:
-                return COLORS.sell;
+                return theme.sell;
             default:
-                return COLORS.hold;
+                return theme.hold;
         }
     };
 
     const getConfidenceConfig = (confidence) => {
-        if (confidence >= CONFIDENCE_LEVELS.HIGH.min) return CONFIDENCE_LEVELS.HIGH;
-        if (confidence >= CONFIDENCE_LEVELS.MEDIUM.min) return CONFIDENCE_LEVELS.MEDIUM;
-        return CONFIDENCE_LEVELS.LOW;
+        if (confidence >= CONFIDENCE_LEVELS.HIGH.min) return { ...CONFIDENCE_LEVELS.HIGH, color: theme.buy };
+        if (confidence >= CONFIDENCE_LEVELS.MEDIUM.min) return { ...CONFIDENCE_LEVELS.MEDIUM, color: theme.warning };
+        return { ...CONFIDENCE_LEVELS.LOW, color: theme.error };
     };
 
     if (loading) {
         return (
-            <SafeAreaView style={styles.container}>
+            <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={COLORS.primary} />
-                    <Text style={styles.loadingText}>Analyzing chart...</Text>
-                    <Text style={styles.loadingSubtext}>Detecting candlestick patterns</Text>
+                    <ActivityIndicator size="large" color={theme.primary} />
+                    <Text style={[styles.loadingText, { color: theme.text }]}>Analyzing chart...</Text>
+                    <Text style={[styles.loadingSubtext, { color: theme.textSecondary }]}>Detecting candlestick patterns</Text>
                 </View>
             </SafeAreaView>
         );
@@ -95,11 +99,11 @@ export default function AnalysisScreen({ route, navigation }) {
 
     if (!result) {
         return (
-            <SafeAreaView style={styles.container}>
+            <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
                 <View style={styles.errorContainer}>
-                    <AlertTriangle color={COLORS.error} size={48} />
-                    <Text style={styles.errorText}>Analysis Failed</Text>
-                    <Text style={styles.errorSubtext}>Unable to analyze the chart. Please try again.</Text>
+                    <AlertTriangle color={theme.error} size={48} />
+                    <Text style={[styles.errorText, { color: theme.text }]}>Analysis Failed</Text>
+                    <Text style={[styles.errorSubtext, { color: theme.textSecondary }]}>Unable to analyze the chart. Please try again.</Text>
                 </View>
             </SafeAreaView>
         );
@@ -109,34 +113,37 @@ export default function AnalysisScreen({ route, navigation }) {
     const confidenceConfig = getConfidenceConfig(signal.confidence);
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 {/* Chart Preview */}
-                <View style={styles.imageContainer}>
+                <View style={[styles.imageContainer, { backgroundColor: theme.surface }]}>
                     <Image source={{ uri: imageUri }} style={styles.chartImage} />
                 </View>
 
                 {/* Signal Card */}
-                <View style={[styles.signalCard, { borderColor: getSignalColor(signal.action) }]}>
+                <View style={[styles.signalCard, {
+                    borderColor: getSignalColor(signal.action),
+                    backgroundColor: theme.surface
+                }]}>
                     <View style={styles.signalHeader}>
                         {getSignalIcon(signal.action)}
                         <View style={styles.signalInfo}>
                             <Text style={[styles.signalAction, { color: getSignalColor(signal.action) }]}>
                                 {signal.action}
                             </Text>
-                            <Text style={styles.signalLabel}>Trading Signal</Text>
+                            <Text style={[styles.signalLabel, { color: theme.textSecondary }]}>Trading Signal</Text>
                         </View>
                     </View>
 
                     {/* Confidence Bar */}
                     <View style={styles.confidenceSection}>
                         <View style={styles.confidenceHeader}>
-                            <Text style={styles.confidenceLabel}>Confidence</Text>
+                            <Text style={[styles.confidenceLabel, { color: theme.textSecondary }]}>Confidence</Text>
                             <Text style={[styles.confidenceValue, { color: confidenceConfig.color }]}>
                                 {signal.confidence}% ({confidenceConfig.label})
                             </Text>
                         </View>
-                        <View style={styles.confidenceBar}>
+                        <View style={[styles.confidenceBar, { backgroundColor: theme.surfaceLight }]}>
                             <View
                                 style={[
                                     styles.confidenceFill,
@@ -147,69 +154,56 @@ export default function AnalysisScreen({ route, navigation }) {
                     </View>
 
                     {/* Reasoning */}
-                    <View style={styles.reasoningContainer}>
-                        <Text style={styles.reasoningText}>{signal.reasoning}</Text>
+                    <View style={[styles.reasoningContainer, { borderTopColor: theme.border }]}>
+                        <Text style={[styles.reasoningText, { color: theme.text }]}>{signal.reasoning}</Text>
                     </View>
                 </View>
 
                 {/* Technical Indicators */}
                 {signal.indicators && (
                     <>
-                        <Text style={styles.sectionTitle}>Technical Indicators</Text>
-                        <View style={styles.indicatorsContainer}>
+                        <Text style={[styles.sectionTitle, { color: theme.text }]}>Technical Indicators</Text>
+                        <View style={[styles.indicatorsContainer, { backgroundColor: theme.surface }]}>
                             <View style={styles.indicatorRow}>
                                 <View style={styles.indicatorItem}>
-                                    <Text style={styles.indicatorLabel}>RSI (14)</Text>
+                                    <Text style={[styles.indicatorLabel, { color: theme.textSecondary }]}>RSI (14)</Text>
                                     <Text style={[styles.indicatorValue, {
-                                        color: signal.indicators.rsi.signal === 'bullish' ? COLORS.buy :
-                                            signal.indicators.rsi.signal === 'bearish' ? COLORS.sell : COLORS.text
+                                        color: signal.indicators.rsi.signal === 'bullish' ? theme.buy :
+                                            signal.indicators.rsi.signal === 'bearish' ? theme.sell : theme.text
                                     }]}>
                                         {signal.indicators.rsi.value}
                                     </Text>
-                                    <Text style={styles.indicatorSubtext}>{signal.indicators.rsi.zone}</Text>
+                                    <Text style={[styles.indicatorSubtext, { color: theme.textSecondary }]}>{signal.indicators.rsi.zone}</Text>
                                 </View>
                                 <View style={styles.indicatorItem}>
-                                    <Text style={styles.indicatorLabel}>MACD</Text>
+                                    <Text style={[styles.indicatorLabel, { color: theme.textSecondary }]}>MACD</Text>
                                     <Text style={[styles.indicatorValue, {
-                                        color: signal.indicators.macd.signal === 'bullish' ? COLORS.buy :
-                                            signal.indicators.macd.signal === 'bearish' ? COLORS.sell : COLORS.text
+                                        color: signal.indicators.macd.signal === 'bullish' ? theme.buy :
+                                            signal.indicators.macd.signal === 'bearish' ? theme.sell : theme.text
                                     }]}>
                                         {signal.indicators.macd.histogram > 0 ? '+' : ''}{signal.indicators.macd.histogram}
                                     </Text>
-                                    <Text style={styles.indicatorSubtext}>{signal.indicators.macd.signal}</Text>
+                                    <Text style={[styles.indicatorSubtext, { color: theme.textSecondary }]}>{signal.indicators.macd.signal}</Text>
                                 </View>
                             </View>
 
                             <View style={styles.indicatorRow}>
                                 <View style={styles.indicatorItem}>
-                                    <Text style={styles.indicatorLabel}>Bollinger Bands</Text>
-                                    <Text style={styles.indicatorValue}>
+                                    <Text style={[styles.indicatorLabel, { color: theme.textSecondary }]}>Bollinger Bands</Text>
+                                    <Text style={[styles.indicatorValue, { color: theme.text }]}>
                                         {signal.indicators.bollingerBands.bandwidth}%
                                     </Text>
-                                    <Text style={styles.indicatorSubtext}>{signal.indicators.bollingerBands.position}</Text>
+                                    <Text style={[styles.indicatorSubtext, { color: theme.textSecondary }]}>{signal.indicators.bollingerBands.position}</Text>
                                 </View>
                                 <View style={styles.indicatorItem}>
-                                    <Text style={styles.indicatorLabel}>Stochastic</Text>
+                                    <Text style={[styles.indicatorLabel, { color: theme.textSecondary }]}>Stochastic</Text>
                                     <Text style={[styles.indicatorValue, {
-                                        color: signal.indicators.stochastic.signal === 'bullish' ? COLORS.buy :
-                                            signal.indicators.stochastic.signal === 'bearish' ? COLORS.sell : COLORS.text
+                                        color: signal.indicators.stochastic.signal === 'bullish' ? theme.buy :
+                                            signal.indicators.stochastic.signal === 'bearish' ? theme.sell : theme.text
                                     }]}>
                                         {signal.indicators.stochastic.k.toFixed(0)}/{signal.indicators.stochastic.d.toFixed(0)}
                                     </Text>
-                                    <Text style={styles.indicatorSubtext}>{signal.indicators.stochastic.zone}</Text>
-                                </View>
-                            </View>
-
-                            <View style={styles.indicatorRow}>
-                                <View style={styles.indicatorItem}>
-                                    <Text style={styles.indicatorLabel}>SMA (20)</Text>
-                                    <Text style={styles.indicatorValue}>{signal.indicators.sma.value}</Text>
-                                    <Text style={styles.indicatorSubtext}>{signal.indicators.sma.priceRelation} price</Text>
-                                </View>
-                                <View style={styles.indicatorItem}>
-                                    <Text style={styles.indicatorLabel}>EMA (12)</Text>
-                                    <Text style={styles.indicatorValue}>{signal.indicators.ema.value}</Text>
-                                    <Text style={styles.indicatorSubtext}>{signal.indicators.ema.priceRelation} price</Text>
+                                    <Text style={[styles.indicatorSubtext, { color: theme.textSecondary }]}>{signal.indicators.stochastic.zone}</Text>
                                 </View>
                             </View>
                         </View>
@@ -217,57 +211,51 @@ export default function AnalysisScreen({ route, navigation }) {
                 )}
 
                 {/* Detected Patterns */}
-                <Text style={styles.sectionTitle}>Detected Patterns</Text>
-                <View style={styles.patternsContainer}>
+                <Text style={[styles.sectionTitle, { color: theme.text }]}>Detected Patterns</Text>
+                <View style={[styles.patternsContainer, { backgroundColor: theme.surface }]}>
                     {patterns.length > 0 ? (
                         patterns.map((pattern, index) => (
-                            <View key={index} style={styles.patternCard}>
+                            <View key={index} style={[styles.patternCard, { borderBottomColor: theme.border }]}>
                                 <View style={[styles.patternIndicator, {
-                                    backgroundColor: pattern.type === 'bullish' ? COLORS.buy :
-                                        pattern.type === 'bearish' ? COLORS.sell : COLORS.hold
+                                    backgroundColor: pattern.type === 'bullish' ? theme.buy :
+                                        pattern.type === 'bearish' ? theme.sell : theme.hold
                                 }]} />
                                 <View style={styles.patternInfo}>
-                                    <Text style={styles.patternName}>{pattern.name}</Text>
-                                    <Text style={styles.patternType}>{pattern.type}</Text>
+                                    <Text style={[styles.patternName, { color: theme.text }]}>{pattern.name}</Text>
+                                    <Text style={[styles.patternType, { color: theme.textSecondary }]}>{pattern.type}</Text>
                                 </View>
-                                <Text style={styles.patternConfidence}>{pattern.confidence}%</Text>
+                                <Text style={[styles.patternConfidence, { color: theme.primary }]}>{pattern.confidence}%</Text>
                             </View>
                         ))
                     ) : (
-                        <Text style={styles.noPatterns}>No clear patterns detected</Text>
+                        <Text style={[styles.noPatterns, { color: theme.textSecondary }]}>No clear patterns detected</Text>
                     )}
                 </View>
 
                 {/* Risk Management */}
-                <Text style={styles.sectionTitle}>Risk Management</Text>
+                <Text style={[styles.sectionTitle, { color: theme.text }]}>Risk Management</Text>
                 <View style={styles.riskContainer}>
-                    <View style={styles.riskCard}>
-                        <Shield color={COLORS.error} size={24} />
+                    <View style={[styles.riskCard, { backgroundColor: theme.surface }]}>
+                        <Shield color={theme.error} size={24} />
                         <View style={styles.riskInfo}>
-                            <Text style={styles.riskLabel}>Stop Loss</Text>
-                            <Text style={styles.riskValue}>{signal.stopLoss}%</Text>
+                            <Text style={[styles.riskLabel, { color: theme.textSecondary }]}>Stop Loss</Text>
+                            <Text style={[styles.riskValue, { color: theme.text }]}>{signal.stopLoss}%</Text>
                         </View>
                     </View>
-                    <View style={styles.riskCard}>
-                        <Target color={COLORS.success} size={24} />
+                    <View style={[styles.riskCard, { backgroundColor: theme.surface }]}>
+                        <Target color={theme.success} size={24} />
                         <View style={styles.riskInfo}>
-                            <Text style={styles.riskLabel}>Take Profit</Text>
-                            <Text style={styles.riskValue}>{signal.takeProfit}%</Text>
+                            <Text style={[styles.riskLabel, { color: theme.textSecondary }]}>Take Profit</Text>
+                            <Text style={[styles.riskValue, { color: theme.text }]}>{signal.takeProfit}%</Text>
                         </View>
                     </View>
-                </View>
-
-                <View style={styles.rrContainer}>
-                    <Text style={styles.rrLabel}>Risk/Reward Ratio</Text>
-                    <Text style={styles.rrValue}>1:{signal.riskRewardRatio}</Text>
                 </View>
 
                 {/* Disclaimer */}
-                <View style={styles.disclaimer}>
-                    <AlertTriangle color={COLORS.warning} size={16} />
-                    <Text style={styles.disclaimerText}>
+                <View style={[styles.disclaimer, { backgroundColor: theme.surface, borderLeftColor: theme.warning }]}>
+                    <AlertTriangle color={theme.warning} size={16} />
+                    <Text style={[styles.disclaimerText, { color: theme.textSecondary }]}>
                         This is not financial advice. Past performance does not guarantee future results.
-                        Always use proper risk management.
                     </Text>
                 </View>
             </ScrollView>
@@ -278,7 +266,6 @@ export default function AnalysisScreen({ route, navigation }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.background,
     },
     scrollContent: {
         padding: SIZES.padding,
@@ -292,14 +279,11 @@ const styles = StyleSheet.create({
     topTitle: {
         fontSize: SIZES.xxl,
         fontWeight: 'bold',
-        color: COLORS.text,
     },
     exportButton: {
         padding: 8,
-        backgroundColor: COLORS.surface,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: COLORS.border,
     },
     loadingContainer: {
         flex: 1,
@@ -309,12 +293,10 @@ const styles = StyleSheet.create({
     loadingText: {
         fontSize: SIZES.xl,
         fontWeight: '600',
-        color: COLORS.text,
         marginTop: 24,
     },
     loadingSubtext: {
         fontSize: SIZES.md,
-        color: COLORS.textSecondary,
         marginTop: 8,
     },
     errorContainer: {
@@ -326,18 +308,15 @@ const styles = StyleSheet.create({
     errorText: {
         fontSize: SIZES.xl,
         fontWeight: '600',
-        color: COLORS.text,
         marginTop: 16,
     },
     errorSubtext: {
         fontSize: SIZES.md,
-        color: COLORS.textSecondary,
         marginTop: 8,
         textAlign: 'center',
     },
     imageContainer: {
         height: 200,
-        backgroundColor: COLORS.surface,
         borderRadius: SIZES.radius,
         overflow: 'hidden',
         marginBottom: 16,
@@ -347,7 +326,6 @@ const styles = StyleSheet.create({
         resizeMode: 'contain',
     },
     signalCard: {
-        backgroundColor: COLORS.surface,
         borderRadius: SIZES.radius,
         padding: SIZES.padding,
         marginBottom: 24,
@@ -367,7 +345,6 @@ const styles = StyleSheet.create({
     },
     signalLabel: {
         fontSize: SIZES.sm,
-        color: COLORS.textSecondary,
     },
     confidenceSection: {
         marginTop: 8,
@@ -379,7 +356,6 @@ const styles = StyleSheet.create({
     },
     confidenceLabel: {
         fontSize: SIZES.md,
-        color: COLORS.textSecondary,
     },
     confidenceValue: {
         fontSize: SIZES.md,
@@ -387,7 +363,6 @@ const styles = StyleSheet.create({
     },
     confidenceBar: {
         height: 8,
-        backgroundColor: COLORS.surfaceLight,
         borderRadius: 4,
         overflow: 'hidden',
     },
@@ -398,11 +373,9 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: SIZES.lg,
         fontWeight: '600',
-        color: COLORS.text,
         marginBottom: 12,
     },
     patternsContainer: {
-        backgroundColor: COLORS.surface,
         borderRadius: SIZES.radius,
         padding: SIZES.padding,
         marginBottom: 24,
@@ -412,7 +385,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
     },
     patternIndicator: {
         width: 4,
@@ -426,21 +398,17 @@ const styles = StyleSheet.create({
     patternName: {
         fontSize: SIZES.md,
         fontWeight: '600',
-        color: COLORS.text,
     },
     patternType: {
         fontSize: SIZES.sm,
-        color: COLORS.textSecondary,
         textTransform: 'capitalize',
     },
     patternConfidence: {
         fontSize: SIZES.md,
         fontWeight: '600',
-        color: COLORS.primary,
     },
     noPatterns: {
         fontSize: SIZES.md,
-        color: COLORS.textSecondary,
         textAlign: 'center',
         paddingVertical: 16,
     },
@@ -453,7 +421,6 @@ const styles = StyleSheet.create({
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: COLORS.surface,
         borderRadius: SIZES.radius,
         padding: SIZES.padding,
         marginHorizontal: 4,
@@ -463,15 +430,12 @@ const styles = StyleSheet.create({
     },
     riskLabel: {
         fontSize: SIZES.sm,
-        color: COLORS.textSecondary,
     },
     riskValue: {
         fontSize: SIZES.lg,
         fontWeight: '600',
-        color: COLORS.text,
     },
     rrContainer: {
-        backgroundColor: COLORS.surface,
         borderRadius: SIZES.radius,
         padding: SIZES.padding,
         flexDirection: 'row',
@@ -481,25 +445,20 @@ const styles = StyleSheet.create({
     },
     rrLabel: {
         fontSize: SIZES.md,
-        color: COLORS.textSecondary,
     },
     rrValue: {
         fontSize: SIZES.xl,
         fontWeight: 'bold',
-        color: COLORS.primary,
     },
     disclaimer: {
         flexDirection: 'row',
-        backgroundColor: COLORS.surface,
         borderRadius: SIZES.radius,
         padding: SIZES.padding,
         borderLeftWidth: 4,
-        borderLeftColor: COLORS.warning,
     },
     disclaimerText: {
         flex: 1,
         fontSize: SIZES.sm,
-        color: COLORS.textSecondary,
         marginLeft: 12,
         lineHeight: 20,
     },
@@ -507,16 +466,13 @@ const styles = StyleSheet.create({
         marginTop: 16,
         paddingTop: 16,
         borderTopWidth: 1,
-        borderTopColor: COLORS.border,
     },
     reasoningText: {
         fontSize: SIZES.md,
-        color: COLORS.text,
         lineHeight: 22,
         fontStyle: 'italic',
     },
     indicatorsContainer: {
-        backgroundColor: COLORS.surface,
         borderRadius: SIZES.radius,
         padding: SIZES.padding,
         marginBottom: 24,
@@ -532,18 +488,15 @@ const styles = StyleSheet.create({
     },
     indicatorLabel: {
         fontSize: SIZES.xs,
-        color: COLORS.textSecondary,
         marginBottom: 4,
         textTransform: 'uppercase',
     },
     indicatorValue: {
         fontSize: SIZES.lg,
         fontWeight: 'bold',
-        color: COLORS.text,
     },
     indicatorSubtext: {
         fontSize: SIZES.xs,
-        color: COLORS.textSecondary,
         marginTop: 2,
         textTransform: 'capitalize',
     },

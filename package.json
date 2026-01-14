@@ -19,9 +19,11 @@
     "expo-camera": "^17.0.10",
     "expo-constants": "~18.0.13",
     "expo-file-system": "^19.0.21",
+    "expo-gl": "~16.0.9",
     "expo-image-manipulator": "^14.0.8",
     "expo-notifications": "~0.32.16",
     "expo-sharing": "~14.0.8",
+    "expo-splash-screen": "~31.0.13",
     "expo-status-bar": "~3.0.9",
     "lucide-react-native": "^0.562.0",
     "react": "19.1.0",
@@ -33,9 +35,19 @@
     "react-native-svg": "15.12.1"
   },
   "private": true,
+  "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "react-native-fs"
+        ]
+      }
+    }
+  },
   "overrides": {
     "@tensorflow/tfjs-react-native": {
-      "@react-native-async-storage/async-storage": "2.2.0"
+      "@react-native-async-storage/async-storage": "2.2.0",
+      "expo-camera": "^17.0.10"
     },
     "react-native-html-to-pdf": {
       "react-native": "0.81.5",

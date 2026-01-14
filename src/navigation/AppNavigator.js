@@ -1,9 +1,11 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Home, Camera, History, Settings, Activity } from 'lucide-react-native';
-import { COLORS, SIZES, SHADOWS } from '../constants';
+import { SIZES, SHADOWS } from '../constants';
+
+
 import {
     HomeScreen,
     CaptureScreen,
@@ -13,16 +15,20 @@ import {
     BacktestingScreen,
 } from '../screens';
 
+import { useTheme } from '../context/ThemeContext';
+
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function HomeTabs() {
+    const { theme } = useTheme();
+
     return (
         <Tab.Navigator
             screenOptions={{
                 headerShown: false,
                 tabBarStyle: {
-                    backgroundColor: COLORS.surface,
+                    backgroundColor: theme.surface,
                     borderTopColor: 'transparent',
                     position: 'absolute',
                     bottom: 20,
@@ -33,10 +39,12 @@ function HomeTabs() {
                     paddingBottom: 10,
                     paddingTop: 10,
                     elevation: 5,
-                    ...SHADOWS.medium,
+                    ...(SHADOWS?.medium || {}),
+                    borderWidth: 1,
+                    borderColor: theme.border,
                 },
-                tabBarActiveTintColor: COLORS.primary,
-                tabBarInactiveTintColor: COLORS.textSecondary,
+                tabBarActiveTintColor: theme.primary,
+                tabBarInactiveTintColor: theme.textSecondary,
                 tabBarLabelStyle: {
                     fontSize: SIZES.sm,
                     fontWeight: '500',
@@ -88,12 +96,28 @@ function HomeTabs() {
 }
 
 export default function AppNavigator() {
+    const { theme, isDarkMode } = useTheme();
+
+    const baseTheme = isDarkMode ? DarkTheme : DefaultTheme;
+    const navigationTheme = {
+        ...baseTheme,
+        colors: {
+            ...baseTheme.colors,
+            primary: theme.primary,
+            background: theme.background,
+            card: theme.surface,
+            text: theme.text,
+            border: theme.border,
+            notification: theme.accent,
+        },
+    };
+
     return (
-        <NavigationContainer>
+        <NavigationContainer theme={navigationTheme}>
             <Stack.Navigator
                 screenOptions={{
                     headerShown: false,
-                    cardStyle: { backgroundColor: COLORS.background },
+                    cardStyle: { backgroundColor: theme.background },
                 }}
             >
                 <Stack.Screen name="Main" component={HomeTabs} />
@@ -112,9 +136,11 @@ export default function AppNavigator() {
                         headerShown: true,
                         headerTitle: 'Analysis Result',
                         headerStyle: {
-                            backgroundColor: COLORS.surface,
+                            backgroundColor: theme.surface,
+                            elevation: 0,
+                            shadowOpacity: 0,
                         },
-                        headerTintColor: COLORS.text,
+                        headerTintColor: theme.text,
                     }}
                 />
                 <Stack.Screen name="History" component={HistoryScreen} />
